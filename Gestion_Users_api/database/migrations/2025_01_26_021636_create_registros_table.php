@@ -8,24 +8,29 @@ return new class extends Migration
 {
     /**
      * Run the migrations.
+     *
+     * @return void
      */
-    public function up(): void
+    public function up()
     {
-        Schema::create('usuario', function (Blueprint $table) {
+        Schema::create('registros', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
             $table->string('apellido');
             $table->string('correo')->unique();
-            $table->date('Fecha_creacion');
+            $table->string('Usuario');
+            $table->string('Contrasena');
             $table->timestamps();
         });
     }
 
     /**
-     * Reverse the migrations.scs
+     * Reverse the migrations.
+     *
+     * @return void
      */
-    public function down(): void
+    public function down()
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('registros');
     }
 };
