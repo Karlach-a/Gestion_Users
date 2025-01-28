@@ -10,10 +10,9 @@ class Registros extends Model
     use HasFactory;
 
     protected $fillable = [
-        'nombre',
-        'apellido',
-        'correo',
-        'Usuario',
-        'Contrasena'
+        'id_user',
+        'fecha_hora',
+        'accion',
+        
     ];
 }

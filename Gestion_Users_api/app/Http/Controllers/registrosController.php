@@ -30,11 +30,10 @@ class registrosController extends Controller
     {
 
         $validador = Validator::make($request->all(), [
-            'nombre' => 'required',
-            'apellido' => 'required',
-            'correo' => 'required|email',
-            'Usuario' => 'required',
-            'Contrasena' => 'required'
+            'id_user' => 'required',
+            'fecha_hora' => 'required',
+            'accion' => 'required'
+            
         ]);
 
         //vdalidar si los datos son correctos
@@ -76,6 +75,23 @@ class registrosController extends Controller
 
         return response()->json($respuesta, 200);
     }
+
+    //funcion historial por usuario
+
+    public function showbyuserid($id_user)
+    {
+        $respuesta = Registros::where('id_user',$id_user)->get();
+
+        if(!$respuesta){
+            $data = ['mensaje' => 'Registro no encontrado',
+                        'status' => 404];
+
+                return response()->json($data, 404);
+        }
+
+        return response()->json($respuesta, 200);
+    }
+
 
     //Eliminar registro
     public function destroy($id)

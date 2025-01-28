@@ -14,13 +14,11 @@ return new class extends Migration
     public function up()
     {
         Schema::create('registros', function (Blueprint $table) {
-            $table->id();
-            $table->string('nombre');
-            $table->string('apellido');
-            $table->string('correo')->unique();
-            $table->string('Usuario');
-            $table->string('Contrasena');
-            $table->timestamps();
+            $table->id(); 
+            $table->foreignId('id_user')->constrained('users')->onDelete('cascade'); // id_user como clave foranea
+            $table->dateTime('fecha_hora'); // fecha_hora DATETIME
+            $table->string('accion'); // accion VARCHAR
+            $table->timestamps(); // created_at y updated_at
         });
     }
 
