@@ -7,6 +7,8 @@ use App\Models\User;
 //dependecia para validar mis datos 
 use Illuminate\Support\Facades\Validator;
 
+use Carbon\Carbon;
+
 class UserController extends Controller
 {
     //funcion para mostrar todos los registros
@@ -19,10 +21,10 @@ class UserController extends Controller
                 'mensaje' => 'No hay registros disponibles',
                 'status' => 404
             ];
-    
+
             return response()->json($data, 404); // Mantener el código HTTP consistente
         }
-    
+
         return response()->json([
             'mensaje' => 'Registros encontrados',
             'status' => 200,
@@ -71,6 +73,8 @@ class UserController extends Controller
             'status' => 200
         ];
     }
+
+    //mostrar datos de usuario segun id
 
     public function show($id)
     {
@@ -214,29 +218,54 @@ class UserController extends Controller
         return response()->json($data, 200);
     }
 
-    public function estadisticaDiaria($dia)
+    //funcion para obtener la cantidad de usuarios registrados en el dia 
+
+    public function estadisticaDiaria(Request $request, $dia)
     {
 
-        $data = [
-            'mensaje' => 'pendiente estadistica diaria ',
-        ];
+        $usuarios_dia = User::whereDate('created_at', $dia)->count();
 
-        return response()->json($data, 200);
+        return response()->json(['Usuarios Registrados este dia: ' => $usuarios_dia]);
     }
 
-    public function estadisticaSemana($semana) {
-        $data = [
-            'mensaje' => 'pendiente estadistica semanna ',
-        ];
+    public function estadisticaSemana($semana)
+    {
+        //obtenemos fecha inicio y ficha  fina de semana actual
+        $fechaInicio = Carbon::now()->startOfWeek();
+        $fechaFin = Carbon::now()->endOfweek();
 
-        return response()->json($data, 200);
+        //consulta en elocuent
+        $usuarios_semana = User::whereBetween('created_at', [$fechaInicio, $fechaFin])->count();
+        //retornamos respuesta en formato JSON
+
+        return response()->json([
+            'semana' => Carbon::now()->week, //numero de semana actual 
+            'Año' => Carbon::now()->year, //año actual 
+            'fecha_inicio' => $fechaInicio->toDateString(),
+            'Fecha_fin' => $fechaFin->toDateString(),
+            'cantidad Usuarios por semana' => $usuarios_semana
+
+        ]);
     }
 
-    public function estadisticaMes($mes) {
-        $data = [
-            'mensaje' => 'pendiente estadistica mes ',
-        ];
+    public function estadisticaMes(Request $request, $mes)
+    {
+       $anio=Carbon::now()->year;
+       $mes=Carbon::now()->month;
 
-        return response()->json($data, 200);
+       $fechaInicio=Carbon::create($anio,$mes,1)->startOfMonth();
+       $fechafin=Carbon::create($anio,$mes,1)->endOfMonth();
+
+       $usuarios_mes = User::whereBetween('created_at', [$fechaInicio, $fechafin])->count();
+
+       return response()->json([
+        'mes' => Carbon::now()->month, //numero de mes actual
+        'Año' => Carbon::now()->year, //año actual 
+        'fecha_inicio' => $fechaInicio->toDateString(),
+        'Fecha_fin' => $fechafin->toDateString(),
+        'cantidad Usuarios por mes' => $usuarios_mes
+
+    ]);
+
     }
 }
