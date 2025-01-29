@@ -13,10 +13,6 @@ Route::post('/register', [AuthController::class, 'register']);
 //ruta par aRealizar el login 
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::get('/estadistica/dias/{dia}', [UserController::class, 'estadisticaDiaria']);
-
-Route::get('/estadistica/semana/{semana}', [UserController::class, 'estadisticaSemana']);
-Route::get('/estadistica/mes/{mes}', [UserController::class, 'estadisticaMes']);
 
 
 
@@ -51,4 +47,8 @@ Route::middleware(['auth:sanctum', 'refresh.token'])->group(function () { //refr
     //rutas para estadisticas 
 
     
+Route::get('/estadistica/dias/{dia}', [UserController::class, 'estadisticaDiaria']);
+Route::get('/estadistica/semana/{semana}', [UserController::class, 'estadisticaSemana']);
+Route::get('/estadistica/mes/{mes}', [UserController::class, 'estadisticaMes']);
+
 });
