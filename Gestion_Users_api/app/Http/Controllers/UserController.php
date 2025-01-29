@@ -74,13 +74,28 @@ class UserController extends Controller
         ];
     }
 
-    //mostrar datos de usuario segun id
+    //mostrar datos de usuario segun nombre, correo o fecha de creacion 
 
-    public function show($id)
+    public function show(Request $request)
     {
-        $respuesta = User::find($id);
 
-        if (!$respuesta) {
+        
+        //$respuesta = User::find($id);
+        //Obtener los filtros desde la consulta
+      $nombre=$request->input('nombre');
+      $email=$request->input('email');
+      $fechaRegistro=$request->input('created_at');
+
+      //consulta
+
+      $usuarios = User::query()
+      ->when($nombre,fn($query)=>$query->where('name','LIKE',"%$nombre%"))
+      ->when($email, fn($query) => $query->where('email', $email))
+      ->when($fechaRegistro, fn($query) => $query->whereDate('created_at', $fechaRegistro))
+      ->get();
+
+
+        if ($usuarios->isEmpty()) {
             $data = [
                 'mensaje' => 'Registro no encontrado',
                 'status' => 404
@@ -234,8 +249,11 @@ class UserController extends Controller
         $fechaInicio = Carbon::now()->startOfWeek();
         $fechaFin = Carbon::now()->endOfweek();
 
+        $usuarios_semana=User::where('created_at', '>', $fechaInicio)
+        ->where('created_at', '<', $fechaFin)
+        ->count();
         //consulta en elocuent
-        $usuarios_semana = User::whereBetween('created_at', [$fechaInicio, $fechaFin])->count();
+       // $usuarios_semana = User::whereBetween('created_at', [$fechaInicio, $fechaFin])->count();
         //retornamos respuesta en formato JSON
 
         return response()->json([
@@ -250,22 +268,23 @@ class UserController extends Controller
 
     public function estadisticaMes(Request $request, $mes)
     {
-       $anio=Carbon::now()->year;
-       $mes=Carbon::now()->month;
 
-       $fechaInicio=Carbon::create($anio,$mes,1)->startOfMonth();
-       $fechafin=Carbon::create($anio,$mes,1)->endOfMonth();
+        //
+        $anio = Carbon::now()->year;
+        $mes = Carbon::now()->month;
 
-       $usuarios_mes = User::whereBetween('created_at', [$fechaInicio, $fechafin])->count();
+        $fechaInicio = Carbon::create($anio, $mes, 1)->startOfMonth();
+        $fechafin = Carbon::create($anio, $mes, 1)->endOfMonth();
 
-       return response()->json([
-        'mes' => Carbon::now()->month, //numero de mes actual
-        'Año' => Carbon::now()->year, //año actual 
-        'fecha_inicio' => $fechaInicio->toDateString(),
-        'Fecha_fin' => $fechafin->toDateString(),
-        'cantidad Usuarios por mes' => $usuarios_mes
+        $usuarios_mes = User::whereBetween('created_at', [$fechaInicio, $fechafin])->count();
 
-    ]);
+        return response()->json([
+            'mes' => Carbon::now()->month, //numero de mes actual 
+            'Año' => Carbon::now()->year, //año actual 
+            'fecha_inicio' => $fechaInicio->toDateString(),
+            'Fecha_fin' => $fechafin->toDateString(),
+            'cantidad Usuarios por mes' => $usuarios_mes
 
+        ]);
     }
 }
