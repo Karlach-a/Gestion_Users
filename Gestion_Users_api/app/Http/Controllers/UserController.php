@@ -8,9 +8,11 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class UserController extends Controller
 {
+
     //funcion para mostrar todos los registros
     public function index()
     {
@@ -33,6 +35,7 @@ class UserController extends Controller
     }
 
     //funcion para guardar un registro
+
     public function store(Request $request)
     {
 
@@ -74,25 +77,43 @@ class UserController extends Controller
         ];
     }
 
+
+
     //mostrar datos de usuario segun nombre, correo o fecha de creacion 
 
-    public function show(Request $request)
-    {
 
-        
+    public function show($id)
+    {
+        $respuesta = User::find($id);
+
+        if (!$respuesta) {
+            $data = [
+                'mensaje' => 'Registro no encontrado',
+                'status' => 404
+            ];
+
+            return response()->json($data, 404);
+        }
+
+        return response()->json($respuesta, 200);
+    }
+
+
+    public function shownef(Request $request)
+    {
         //$respuesta = User::find($id);
         //Obtener los filtros desde la consulta
-      $nombre=$request->input('nombre');
-      $email=$request->input('email');
-      $fechaRegistro=$request->input('created_at');
+        $nombre = $request->input('nombre');
+        $email = $request->input('email');
+        $fechaRegistro = $request->input('created_at');
 
-      //consulta
+        //consulta
 
-      $usuarios = User::query()
-      ->when($nombre,fn($query)=>$query->where('name','LIKE',"%$nombre%"))
-      ->when($email, fn($query) => $query->where('email', $email))
-      ->when($fechaRegistro, fn($query) => $query->whereDate('created_at', $fechaRegistro))
-      ->get();
+        $usuarios = User::query()
+            ->when($nombre, fn($query) => $query->where('name', 'LIKE', "%$nombre%"))
+            ->when($email, fn($query) => $query->where('email', $email))
+            ->when($fechaRegistro, fn($query) => $query->whereDate('created_at', $fechaRegistro))
+            ->get();
 
 
         if ($usuarios->isEmpty()) {
@@ -104,7 +125,7 @@ class UserController extends Controller
             return response()->json($data, 404);
         }
 
-        return response()->json($respuesta, 200);
+        return response()->json($usuarios, 200);
     }
 
     //Eliminar registro
@@ -162,6 +183,8 @@ class UserController extends Controller
 
             return response()->json($data, 400);
         }
+
+
 
         $respuesta->update($request->all());
 
@@ -235,56 +258,79 @@ class UserController extends Controller
 
     //funcion para obtener la cantidad de usuarios registrados en el dia 
 
-    public function estadisticaDiaria(Request $request, $dia)
+    public function estadisticaDiaria($dia)
     {
 
         $usuarios_dia = User::whereDate('created_at', $dia)->count();
-
         return response()->json(['Usuarios Registrados este dia: ' => $usuarios_dia]);
     }
 
-    public function estadisticaSemana($semana)
-    {
-        //obtenemos fecha inicio y ficha  fina de semana actual
-        $fechaInicio = Carbon::now()->startOfWeek();
-        $fechaFin = Carbon::now()->endOfweek();
 
-        $usuarios_semana=User::where('created_at', '>', $fechaInicio)
-        ->where('created_at', '<', $fechaFin)
-        ->count();
-        //consulta en elocuent
-       // $usuarios_semana = User::whereBetween('created_at', [$fechaInicio, $fechaFin])->count();
-        //retornamos respuesta en formato JSON
+    //funcion para obtener la cantidad de usuarios registrados en la semana
+    public function estadisticaSemana(Request $request)
+    {
+        // Validación de la fecha en la petición
+        $validator = Validator::make($request->all(), [
+            'fecha' => 'required|date', // La fecha es obligatoria y debe ser válida
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
+
+        // Obtener la fecha de referencia desde la solicitud
+        $fechaReferencia = Carbon::parse($request->input('fecha'));
+
+        // Aseguramos que la semana empieza el lunes
+        $fechaInicio = $fechaReferencia->copy()->startOfWeek(Carbon::MONDAY); // Lunes de la semana
+        $fechaFin = $fechaReferencia->copy()->endOfWeek(Carbon::SUNDAY); // Domingo de la semana
+
+
+
+        // Obtener el número de usuarios registrados en esa semana
+        $usuarios_semana = User::whereBetween('created_at', [$fechaInicio, $fechaFin])->count();
+
 
         return response()->json([
-            'semana' => Carbon::now()->week, //numero de semana actual 
-            'Año' => Carbon::now()->year, //año actual 
+            'semana' => $fechaReferencia->week, // Número de semana del año
+            'anio' => $fechaReferencia->year, // Año correspondiente
             'fecha_inicio' => $fechaInicio->toDateString(),
-            'Fecha_fin' => $fechaFin->toDateString(),
-            'cantidad Usuarios por semana' => $usuarios_semana
-
+            'fecha_fin' => $fechaFin->toDateString(),
+            'cantidad_usuarios' => $usuarios_semana
         ]);
     }
 
-    public function estadisticaMes(Request $request, $mes)
+    //funcion muestra usuarios registrados por mes 
+
+    public function estadisticaMes(Request $request)
     {
+        // Validación de entrada
+        $validator = Validator::make($request->all(), [
+            'mes' => 'nullable|integer|min:1|max:12',  // Opcional, debe ser un número entre 1 y 12
+            'anio' => 'nullable|integer|min:2000|max:' . Carbon::now()->year // Opcional, desde el año 2000 hasta el actual
+        ]);
 
-        //
-        $anio = Carbon::now()->year;
-        $mes = Carbon::now()->month;
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 400);
+        }
 
+        // Obtener mes y año desde el request, o usar el actual si no se envían
+        $mes = $request->input('mes', Carbon::now()->month);
+        $anio = $request->input('anio', Carbon::now()->year);
+
+        // Fechas de inicio y fin del mes seleccionado
         $fechaInicio = Carbon::create($anio, $mes, 1)->startOfMonth();
-        $fechafin = Carbon::create($anio, $mes, 1)->endOfMonth();
+        $fechaFin = Carbon::create($anio, $mes, 1)->endOfMonth();
 
-        $usuarios_mes = User::whereBetween('created_at', [$fechaInicio, $fechafin])->count();
+        // Contar usuarios registrados en ese mes
+        $usuarios_mes = User::whereBetween('created_at', [$fechaInicio, $fechaFin])->count();
 
         return response()->json([
-            'mes' => Carbon::now()->month, //numero de mes actual 
-            'Año' => Carbon::now()->year, //año actual 
+            'mes' => $mes,
+            'anio' => $anio,
             'fecha_inicio' => $fechaInicio->toDateString(),
-            'Fecha_fin' => $fechafin->toDateString(),
-            'cantidad Usuarios por mes' => $usuarios_mes
-
+            'fecha_fin' => $fechaFin->toDateString(),
+            'cantidad_usuarios' => $usuarios_mes
         ]);
     }
 }

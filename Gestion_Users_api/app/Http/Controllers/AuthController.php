@@ -45,6 +45,7 @@ class AuthController extends Controller
         ], 201);
     }
 
+//Funciopn para poder realizar el login 
     public function login(Request $request)
     {
 
@@ -57,7 +58,7 @@ class AuthController extends Controller
         //creamos el token
         $token = $user->createToken('auth_token')->plainTextToken;
 
-         //guardamos los Login en la tabla registros
+        //guardamos los Login en la tabla registros
         $registro = Registros::create([
             'id_user' => $user->id,
             'fecha_hora' => Carbon::now(),
@@ -74,6 +75,7 @@ class AuthController extends Controller
         ]);
     }
 
+    //funcion Logout 
     public function logout(Request $request)
     {
         $request->user()->tokens()->delete();

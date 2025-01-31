@@ -48,7 +48,7 @@ Route::middleware(['auth:sanctum', 'refresh.token'])->group(function () { //refr
 
     
 Route::get('/estadistica/dias/{dia}', [UserController::class, 'estadisticaDiaria']);
-Route::get('/estadistica/semana/{semana}', [UserController::class, 'estadisticaSemana']);
-Route::get('/estadistica/mes/{mes}', [UserController::class, 'estadisticaMes']);
+Route::get('/estadistica/semana/semana', [UserController::class, 'estadisticaSemana']);
+Route::get('/estadistica/mes/mes', [UserController::class, 'estadisticaMes']);
 
 });
